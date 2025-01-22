@@ -1,0 +1,19 @@
+{{- if .Values.gethconfig.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "prysm.fullname" . }}
+data:
+  geth.toml: |
+    {{- .Values.config | nindent 4 }}
+  config.yml: |
+  {{- .Files.Get "files/config.yml" | nindent 4 }}
+  genesis.json: |
+  {{- .Files.Get "files/genesis.json" | nindent 4 }}
+  init-script.sh: |
+  {{- .Files.Get "files/init-script.sh" | nindent 4 }}
+  init-beacon-script.sh: |
+  {{- .Files.Get "files/init-beacon-script.sh" | nindent 4 }}
+  init-script-bootnode.sh: |
+  {{- .Files.Get "files/init-script-bootnode.sh" | nindent 4 }}
+  {{- end }}

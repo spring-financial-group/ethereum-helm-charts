@@ -18,9 +18,8 @@ image:
 # -- Extra args for the geth container
 extraArgs:
   - --networkid=999999
-  - --verbosity=5
+  - --verbosity=3
   - --ipcpath=/tmp/geth.ipc
-  - --maxpeers=10
 
 gethconfig:
   # -- ConfigMap for geth
@@ -86,7 +85,6 @@ defaultCommandTemplate: |
     --metrics
     --metrics.addr=0.0.0.0
     --metrics.port={{ .Values.metricsPort }}
-    --bootnodes=enode://e34b7d87a57a07c84451ff566cdd0e891829aebe1a4f47ad66a75c2dc053b7390ac718d56b1019666b9cd1df242019b477c436fbcfc65245a0c1bceedfbffad6@10.244.4.184:30303
   {{- range .Values.extraArgs }}
     {{ tpl . $ }}
   {{- end }}
