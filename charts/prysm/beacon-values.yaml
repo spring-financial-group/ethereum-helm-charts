@@ -77,7 +77,7 @@ defaultBeaconCommandTemplate: |
     --grpc-gateway-port={{ .Values.httpPort }}
     --monitoring-host=0.0.0.0
     --monitoring-port={{ .Values.metricsPort }}
-    --execution-endpoint=http://geth-node:8551
+    --execution-endpoint=http://geth-helm:8551
     --chain-id=32382
     --chain-config-file=/config/config.yml
     --min-sync-peers=1
@@ -205,7 +205,7 @@ persistence:
   # -- Uses an EmptyDir when not enabled
   enabled: true
   # -- Use an existing PVC when persistence.enabled
-  existingClaim: genesis-data-pvc
+  existingClaim:
   # -- Access mode for the volume claim template
   accessModes:
     - ReadWriteMany
@@ -391,3 +391,14 @@ serviceMonitor:
   scrapeTimeout: 30s
   # -- ServiceMonitor relabelings
   relabelings: []
+
+
+gethconfig:
+  # -- ConfigMap for geth
+  enabled: true
+
+# -- TOML config file
+# @default -- See `values.yaml` for example
+config: |
+  [Node.P2P]
+  DialRatio = 3
