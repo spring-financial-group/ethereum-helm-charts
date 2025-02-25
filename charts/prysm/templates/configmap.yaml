@@ -11,9 +11,17 @@ data:
   genesis.json: |
   {{- .Files.Get "files/genesis.json" | nindent 4 }}
   init-script.sh: |
-  {{- .Files.Get "files/init-script.sh" | nindent 4 }}
+  {{- tpl (.Files.Get "files/init-script.sh") . | nindent 4 }}
   init-beacon-script.sh: |
-  {{- .Files.Get "files/init-beacon-script.sh" | nindent 4 }}
+  {{- tpl (.Files.Get "files/init-beacon-script.sh") . | nindent 4 }}
+  init-validator-script.sh: |
+  {{- tpl (.Files.Get "files/init-validator-script.sh") . | nindent 4 }}
   init-script-bootnode.sh: |
   {{- .Files.Get "files/init-script-bootnode.sh" | nindent 4 }}
+  deposit_data-1.json: |
+  {{- .Files.Get "files/deposit_data-1.json" | nindent 4 }}
+  keystore-m_1.json: |
+  {{- .Files.Get "files/keystore-m_1.json" | nindent 4 }}
+  password.txt: |
+  {{- .Files.Get "files/password.txt" | nindent 4 }}
   {{- end }}

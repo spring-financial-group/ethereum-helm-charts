@@ -1,0 +1,13 @@
+[
+  {
+    "pubkey": "af495468c86ca7376d0c8d22f96f0ee86a17edf63e38faa88cc74bdfd369af1b7fd9bce8e4088682c840eaa33aa076fb",
+    "withdrawal_credentials": "010000000000000000000000a4ea2002ced0207d2ac60c55efee7be3b6b23d5b",
+    "amount": 32000000000,
+    "signature": "a4ebfa5cd06d744570a3782babdfe8fa253d1590a974ed40d06c650e3751b3b561fd73cb53c4e165ee2ec2afeaebc11c0e953e3e09dfde6b63d1ee4bcc86d808ded1c6918a1971afc4fde806a135cb293ed4ddf47391f1123bab39f6d1bf4472",
+    "deposit_message_root": "71acb6acd7a094a547260ea1c635e92dd3e3e5c3604999565e15791622f2d1eb",
+    "deposit_data_root": "d32fa3391648e6b647ee313b9e30fd92a3e0531e2fccca5ba28598ff2613f1f5",
+    "fork_version": "90000000",
+    "network_name": "customdevnet",
+    "deposit_cli_version": "2.8.0"
+  }
+]

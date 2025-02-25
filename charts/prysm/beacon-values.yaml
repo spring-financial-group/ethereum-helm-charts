@@ -16,7 +16,7 @@ image:
   # When using a validator:
   # repository: gcr.io/prysmaticlabs/prysm/validator
   # -- Prysm container image tag
-  tag: v5.2.0
+  tag: v5.3.0
   # -- Prysm container pull policy
   pullPolicy: IfNotPresent
 
@@ -77,10 +77,10 @@ defaultBeaconCommandTemplate: |
     --grpc-gateway-port={{ .Values.httpPort }}
     --monitoring-host=0.0.0.0
     --monitoring-port={{ .Values.metricsPort }}
-    --execution-endpoint=http://geth-helm:8551
+    --execution-endpoint=http://geth-node:8551
     --chain-id=32382
     --chain-config-file=/config/config.yml
-    --min-sync-peers=1
+    --min-sync-peers=0
     --contract-deployment-block=0
     --suggested-fee-recipient=0xa4Ea2002Ced0207D2Ac60C55EFEe7Be3b6b23d5B
   {{- if .Values.checkpointSync.enabled }}
@@ -346,6 +346,7 @@ secretEnv: {}
 initChownData:
   # -- Init container to set the correct permissions to access data directories
   enabled: true
+  freshInit: true
   image:
     # -- Container repository
     repository: "mqubeosscluster.azurecr.io/mqube-geth"

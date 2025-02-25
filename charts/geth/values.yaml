@@ -9,10 +9,8 @@ replicas: 1
 
 image:
   # -- geth container image repository
-  repository: ethereum/client-go
-  # -- geth container image tag
-  tag: stable
-  # -- geth container pull policy
+  repository: "mqubeosscluster.azurecr.io/mqube-geth"
+  tag: 0.0.6  # -- geth container pull policy
   pullPolicy: IfNotPresent
 
 # -- Extra args for the geth container
@@ -328,6 +326,7 @@ secretEnv: {}
 initChownData:
   # -- Init container to set the correct permissions to access data directories
   enabled: true
+  freshInit: true
   image:
     # -- Container repository
     repository: "mqubeosscluster.azurecr.io/mqube-geth"

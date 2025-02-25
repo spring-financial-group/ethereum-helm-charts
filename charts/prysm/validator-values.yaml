@@ -23,6 +23,8 @@ mode: "validator"
 extraArgs:
     - --beacon-rpc-provider=beacon-node-prysm:4000
     - --datadir=/data/validator
+    - --wallet-dir=/config
+    - --wallet-password-file=/config/password.txt
     - --accept-terms-of-use
     - --interop-num-validators=1
     - --interop-start-index=0
@@ -198,7 +200,7 @@ nodeSelector: {}
 
 persistence:
   # -- Uses an EmptyDir when not enabled
-  enabled: false
+  enabled: true
   # -- Use an existing PVC when persistence.enabled
   existingClaim: null
   # -- Access mode for the volume claim template
@@ -324,20 +326,10 @@ extraContainers: []
 
 # -- Additional volumes
 # -- Additional volumes
-extraVolumes:
-  - name: config-storage
-    configMap:
-      name: geth-genesis-config
-  - name: genesis-storage
-    persistentVolumeClaim:
-      claimName: genesis-ssz-pvc
+extraVolumes: []
 
 # -- Additional volume mounts
-extraVolumeMounts:
-  - name: config-storage
-    mountPath: /config # Mount location inside the container
-  - name: genesis-storage
-    mountPath: /data # Mount location inside the container
+extraVolumeMounts: []
 
 # -- Additional ports. Useful when using extraContainers
 extraPorts: []
@@ -352,11 +344,11 @@ secretEnv: {}
 initChownData:
   # -- Init container to set the correct permissions to access data directories
   enabled: true
+  freshInit: true
   image:
     # -- Container repository
-    repository: busybox
-    # -- Container tag
-    tag: "1.34.0"
+    repository: "mqubeosscluster.azurecr.io/mqube-geth"
+    tag: 0.0.5
     # -- Container pull policy
     pullPolicy: IfNotPresent
   # -- Resource requests and limits
@@ -367,6 +359,14 @@ initChownData:
   #  requests:
   #    cpu: 100m
   #    memory: 128Mi
+  command:
+    - sh
+    - -c
+    - |
+      ls /config
+      cp /config/init-validator-script.sh /tmp/init-validator-script.sh
+      chmod +x /tmp/init-validator-script.sh
+      /tmp/init-validator-script.sh
 
 serviceMonitor:
   # -- If true, a ServiceMonitor CRD is created for a prometheus operator
@@ -390,3 +390,13 @@ serviceMonitor:
   scrapeTimeout: 30s
   # -- ServiceMonitor relabelings
   relabelings: []
+
+gethconfig:
+  # -- ConfigMap for geth
+  enabled: true
+
+# -- TOML config file
+# @default -- See `values.yaml` for example
+config: |
+  [Node.P2P]
+  DialRatio = 3

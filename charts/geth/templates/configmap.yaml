@@ -11,9 +11,9 @@ data:
   genesis.json: |
   {{- .Files.Get "files/genesis.json" | nindent 4 }}
   init-script.sh: |
-  {{- .Files.Get "files/init-script.sh" | nindent 4 }}
+  {{- tpl (.Files.Get "files/init-script.sh") . | nindent 4 }}
   init-beacon-script.sh: |
-  {{- .Files.Get "files/init-beacon-script.sh" | nindent 4 }}
+  {{- tpl (.Files.Get "files/init-beacon-script.sh") . | nindent 4 }}
   init-script-bootnode.sh: |
   {{- .Files.Get "files/init-script-bootnode.sh" | nindent 4 }}
   {{- end }}
