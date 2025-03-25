@@ -36,12 +36,13 @@ if [ ! -f /data/stateFiles/genesis.ssz ] || [ ! -f /data/stateFiles/genesis-out.
   # Check if prysmctl is executable
   ls -lrt /usr/local/bin/prysmctl
 
-  echo "Creating the genesis state using the provided genesis.json and config.yml..."
+echo "Creating the genesis state using the provided genesis.json and config.yml..."
 
-  GENESIS_TIME=${GENESIS_TIME:-1736642736}
+# Ensure Genesis Time is set to the current timestamp
+GENESIS_TIME=$(date +%s)
 
-  # Run prysmctl to generate the genesis state
-  /usr/local/bin/prysmctl testnet generate-genesis \
+# Run prysmctl to generate the genesis state
+/usr/local/bin/prysmctl testnet generate-genesis \
     --num-validators=1 \
     --chain-config-file=/config/config.yml \
     --geth-genesis-json-in=/config/genesis.json \
@@ -49,43 +50,47 @@ if [ ! -f /data/stateFiles/genesis.ssz ] || [ ! -f /data/stateFiles/genesis-out.
     --geth-genesis-json-out=/data/stateFiles/genesis-out.json \
     --genesis-time="$GENESIS_TIME"
 
-  echo "Genesis state files created successfully."
+echo "Genesis state files created successfully."
 
-  # Check if jq is installed, if not install it dynamically
-  if ! command -v jq >/dev/null; then
+# Check if jq is installed, if not install it dynamically
+if ! command -v jq >/dev/null; then
     echo "jq not found, installing jq dynamically..."
     if command -v apk >/dev/null; then
-      apk update && apk add --no-cache jq
+        apk update && apk add --no-cache jq
     elif command -v apt-get >/dev/null; then
-      apt-get update && apt-get install -y jq
+        apt-get update && apt-get install -y jq
     elif command -v yum >/dev/null; then
-      yum install -y jq
+        yum install -y jq
     else
-      echo "No known package manager found to install jq, aborting."
-      exit 1
+        echo "No known package manager found to install jq, aborting."
+        exit 1
     fi
-  fi
+fi
 
-  echo "jq successfully installed."
+echo "jq successfully installed."
 
-  # Inject missing Cancun blobSchedule parameters into genesis-out.json
-  echo "Injecting Cancun blobSchedule parameters..."
+# Inject Cancun & Deneb activation parameters into genesis-out.json
+echo "Injecting Cancun & Deneb parameters into genesis configuration..."
 
-  jq '.config.shanghaiTime = '"$GENESIS_TIME"' |
-      .config.cancunTime = '"$GENESIS_TIME"' |
-      .config.cancunBlock = 0 |
-      .config.blobSchedule.cancun = 0 |
-      .config.terminalTotalDifficulty = 1 |
-      .config.terminalTotalDifficultyPassed = true' \
-      /data/stateFiles/genesis-out.json > /data/stateFiles/genesis-final.json
+jq '.config.shanghaiTime = '"$GENESIS_TIME"' |
+    .config.cancunTime = '"$GENESIS_TIME"' |
+    .config.denebTime = '"$GENESIS_TIME"' |  # Ensures Deneb activates at Genesis
+    .config.cancunBlock = 0 |
+    .config.blobSchedule.cancun = 0 |
+    .config.terminalTotalDifficulty = 1 |
+    .config.terminalTotalDifficultyPassed = true' \
+    /data/stateFiles/genesis-out.json > /data/stateFiles/genesis-final.json
 
-  mv /data/stateFiles/genesis-final.json /data/stateFiles/genesis-out.json
+# Replace the final genesis file
+mv /data/stateFiles/genesis-final.json /data/stateFiles/genesis-out.json
 
-  echo "Cancun parameters successfully injected."
+echo "Cancun & Deneb parameters successfully injected into genesis-out.json."
 
-  # Confirm that the files are correctly in place
-  ls -lrt /data/stateFiles/genesis.ssz /data/stateFiles/genesis-out.json
+# Initialize Geth with the updated genesis file
+echo "Initializing Geth with the updated genesis..."
+geth init --datadir /data/geth /data/stateFiles/genesis-out.json
 
+echo "Geth initialized successfully with Deneb active."
 
 else
   echo "Genesis state files already exist. Skipping creation."

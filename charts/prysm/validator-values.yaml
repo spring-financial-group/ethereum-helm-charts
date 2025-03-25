@@ -12,7 +12,7 @@ image:
   # Multi-Arch (arm64/amd64) image
   repository: gcr.io/prysmaticlabs/prysm/validator
   # -- Prysm container image tag
-  tag: latest
+  tag: v5.1.2
   # -- Prysm container pull policy
   pullPolicy: IfNotPresent
 
@@ -24,14 +24,9 @@ extraArgs:
     - --beacon-rpc-provider=beacon-node-prysm:4000
     - --datadir=/data/validator
     - --wallet-dir=/config
-    - --wallet-password-file=/config/password.txt
     - --accept-terms-of-use
-    - --interop-num-validators=1
+    - --interop-num-validators=64
     - --interop-start-index=0
-    - --rpc-port=4000
-    - --grpc-gateway-port=3500
-    - --monitoring-port=8080
-    - --graffiti="node-0"
     - --chain-config-file=/config/config.yml
 
 # -- JWT secret used by client as a secret. Change this value.
@@ -99,6 +94,8 @@ defaultValidatorCommandTemplate: |
     exec /app/cmd/validator/validator
     --accept-terms-of-use=true
     --datadir=/data/network/validator
+    --interop-num-validators=1
+    --interop-start-index=0
     --monitoring-host=0.0.0.0
     --monitoring-port={{ .Values.metricsPort }}
   {{- range .Values.extraArgs }}

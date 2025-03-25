@@ -15,23 +15,30 @@
 		"londonBlock": 0,
 		"arrowGlacierBlock": 0,
 		"grayGlacierBlock": 0,
+		"shanghaiBlock": 0,
+		"cancunBlock": 0,
 		"shanghaiTime": 1695897038,
 		"cancunTime": 1695897038,
-		"cancunBlock": 0,
-		"blobSchedule": {
-			"cancun": 0
-		},
+		"mergeForkBlock": null,
 		"terminalTotalDifficulty": 1,
 		"terminalTotalDifficultyPassed": true,
 		"depositContractAddress": "0x4242424242424242424242424242424242424242",
-		"terminalBlockHash": "0x2b04932287d8963ba85e77b3c9632301c91fe8a63199e397fafd1eb12e552850",
+		"terminalBlockHash": "0xecef20ce7694ed9aacd42284bd29b4a4abea77d157f85113bcfeedbebf4f8a84",
 		"terminalBlockNumber": 0,
-		"totalDifficulty": "0x1"
+		"totalDifficulty": "0x1",
+		"blobSchedule": {
+			"cancun": {
+				"block": 0,
+				"baseFeeUpdateFraction": 1,
+				"maxBlobGasPerBlock": 524288,
+				"blobGasPriceUpdateDenominator": 48
+			}
+		}
 	},
-	"timestamp": "0x651555ce",
-	"extraData": "0x0000000000000000000000000000000000000000000000000000000000000000123463a4b065722e99115d6c222f267d9cabb5240000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+	"timestamp": "0x65e77120",
+	"extraData": "0x0000000000000000000000000000000000000000000000000000000000000000",
 	"gasLimit": "0x1c9c380",
-	"difficulty": "0x0",
+	"difficulty": "0x1",
 	"coinbase": "0x0000000000000000000000000000000000000000",
 	"alloc": {
 		"123463a4b065722e99115d6c222f267d9cabb524": {
@@ -58,8 +65,5 @@
 	},
 	"number": "0x0",
 	"gasUsed": "0x0",
-	"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
-	"baseFeePerGas": null,
-	"excessBlobGas": null,
-	"blobGasUsed": null
+	"parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
 }
