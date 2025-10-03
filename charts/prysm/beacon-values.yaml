@@ -16,7 +16,7 @@ image:
   # When using a validator:
   # repository: gcr.io/prysmaticlabs/prysm/validator
   # -- Prysm container image tag
-  tag: v5.2.0
+  tag: v5.1.2
   # -- Prysm container pull policy
   pullPolicy: IfNotPresent
 
@@ -46,51 +46,21 @@ defaultBeaconCommandTemplate: |
     . /env/init-nodeport;
   {{- end }}
     exec /app/cmd/beacon-chain/beacon-chain
-    --accept-terms-of-use=true
-    --datadir=/data/network/beacon/$HOSTNAME
-  {{- if .Values.p2pNodePort.enabled }}
-    {{- if not (contains "--p2p-host-ip=" (.Values.extraArgs | join ",")) }}
-    --p2p-host-ip=$EXTERNAL_IP
-    {{- end }}
-    {{- if not (contains "--p2p-tcp-port=" (.Values.extraArgs | join ",")) }}
-    --p2p-tcp-port=$EXTERNAL_PORT
-    {{- end }}
-    {{- if not (contains "--p2p-udp-port" (.Values.extraArgs | join ",")) }}
-    --p2p-udp-port=$EXTERNAL_PORT
-    {{- end }}
-  {{- else }}
-    {{- if not (contains "--p2p-host-ip=" (.Values.extraArgs | join ",")) }}
-    --p2p-host-ip=$(POD_IP)
-    {{- end }}
-    {{- if not (contains "--p2p-tcp-port=" (.Values.extraArgs | join ",")) }}
-    --p2p-tcp-port={{ include "prysm.p2pPort" . }}
-    {{- end }}
-    {{- if not (contains "--p2p-udp-port=" (.Values.extraArgs | join ",")) }}
-    --p2p-udp-port={{ include "prysm.p2pPort" . }}
-    {{- end }}
-  {{- end }}
-    --rpc-host=0.0.0.0
-    --rpc-port={{ .Values.rpcPort }}
-    --genesis-state=/data/stateFiles/genesis.ssz
-    --jwt-secret=/data/jwt.hex
-    --grpc-gateway-host=0.0.0.0
-    --grpc-gateway-port={{ .Values.httpPort }}
-    --monitoring-host=0.0.0.0
-    --monitoring-port={{ .Values.metricsPort }}
-    --execution-endpoint=http://geth-helm:8551
-    --chain-id=32382
+    --datadir=/data/beacon/$HOSTNAME
+    --min-sync-peers=0
+    --genesis-state=/shared-data/genesis.ssz
+    --bootstrap-node=
+    --interop-eth1data-votes
     --chain-config-file=/config/config.yml
-    --min-sync-peers=1
     --contract-deployment-block=0
-    --suggested-fee-recipient=0xa4Ea2002Ced0207D2Ac60C55EFEe7Be3b6b23d5B
-  {{- if .Values.checkpointSync.enabled }}
-    --checkpoint-sync-url={{ tpl .Values.checkpointSync.url $ }}
-    --genesis-beacon-api-url={{ tpl .Values.checkpointSync.url $ }}
-  {{- end }}
-  {{- range .Values.extraArgs }}
-    {{ tpl . $ }}
-  {{- end }}
-
+    --chain-id=${CHAIN_ID:-32382}
+    --rpc-host=0.0.0.0
+    --grpc-gateway-host=0.0.0.0
+    --execution-endpoint=http://geth-node:8551
+    --accept-terms-of-use
+    --jwt-secret=/shared-data/jwt.hex
+    --suggested-fee-recipient=0x123463a4b065722e99115d6c222f267d9cabb524
+    --minimum-peers-per-subnet=0
 #    --genesis-state=/data/beacon/genesis.ssz
 # -- Template used for the default validator command
 # @default -- See `values.yaml`
@@ -203,9 +173,9 @@ nodeSelector: {}
 
 persistence:
   # -- Uses an EmptyDir when not enabled
-  enabled: true
+  enabled: false
   # -- Use an existing PVC when persistence.enabled
-  existingClaim:
+  existingClaim: shared-genesis-data-pvc
   # -- Access mode for the volume claim template
   accessModes:
     - ReadWriteMany
@@ -325,7 +295,24 @@ initContainers: []
 #   command: ['/bin/bash', '-c', 'echo hello']
 
 # -- Additional containers
-extraContainers: []
+extraContainers:
+  - name: debug-node
+    image: "jx3mqubebuild.azurecr.io/mqube-geth:0.0.13"
+    command: [ "/bin/sh", "-c", "while true; do sleep 30; done" ]
+    volumeMounts:
+      - name: storage
+        mountPath: /data
+      - name: config
+        mountPath: /config
+      - name: shared-data
+        mountPath: /shared-data
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
 
 # -- Additional volumes
 extraVolumes: []
@@ -348,8 +335,8 @@ initChownData:
   enabled: true
   image:
     # -- Container repository
-    repository: "mqubeosscluster.azurecr.io/mqube-geth"
-    tag: 0.0.5
+    repository: "jx3mqubebuild.azurecr.io/mqube-geth"
+    tag: 0.0.9
     # -- Container pull policy
     pullPolicy: IfNotPresent
   # -- Resource requests and limits

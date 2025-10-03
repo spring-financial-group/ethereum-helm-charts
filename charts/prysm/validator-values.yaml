@@ -12,7 +12,7 @@ image:
   # Multi-Arch (arm64/amd64) image
   repository: gcr.io/prysmaticlabs/prysm/validator
   # -- Prysm container image tag
-  tag: latest
+  tag: v5.1.2
   # -- Prysm container pull policy
   pullPolicy: IfNotPresent
 
@@ -21,16 +21,12 @@ mode: "validator"
 
 # -- Extra args for the prysm container
 extraArgs:
-    - --beacon-rpc-provider=beacon-node-prysm:4000
-    - --datadir=/data/validator
-    - --accept-terms-of-use
-    - --interop-num-validators=1
-    - --interop-start-index=0
-    - --rpc-port=4000
-    - --grpc-gateway-port=3500
-    - --monitoring-port=8080
-    - --graffiti="node-0"
-    - --chain-config-file=/config/config.yml
+  - --beacon-rpc-provider=beacon-node-prysm:4000
+  - --datadir=/data/validator
+  - --accept-terms-of-use
+  - --interop-num-validators=64
+  - --interop-start-index=0
+  - --chain-config-file=/config/config.yml
 
 # -- JWT secret used by client as a secret. Change this value.
 jwt: ecb22bc24e7d4061f7ed690ccd5846d7d73f5d2b9733267e12f56790398d908a
@@ -95,10 +91,12 @@ defaultValidatorCommandTemplate: |
   - -ac
   - >-
     exec /app/cmd/validator/validator
-    --accept-terms-of-use=true
-    --datadir=/data/network/validator
-    --monitoring-host=0.0.0.0
-    --monitoring-port={{ .Values.metricsPort }}
+    --beacon-rpc-provider=beacon-chain:4000
+    --datadir=/data/validator
+    --accept-terms-of-use
+    --interop-num-validators=64
+    --interop-start-index=0
+    --chain-config-file=/config/config.yml
   {{- range .Values.extraArgs }}
     {{ tpl . $ }}
   {{- end }}
@@ -200,7 +198,7 @@ persistence:
   # -- Uses an EmptyDir when not enabled
   enabled: false
   # -- Use an existing PVC when persistence.enabled
-  existingClaim: null
+  existingClaim: shared-genesis-data-pvc
   # -- Access mode for the volume claim template
   accessModes:
   - ReadWriteOnce
@@ -324,20 +322,10 @@ extraContainers: []
 
 # -- Additional volumes
 # -- Additional volumes
-extraVolumes:
-  - name: config-storage
-    configMap:
-      name: geth-genesis-config
-  - name: genesis-storage
-    persistentVolumeClaim:
-      claimName: genesis-ssz-pvc
+extraVolumes: []
 
 # -- Additional volume mounts
-extraVolumeMounts:
-  - name: config-storage
-    mountPath: /config # Mount location inside the container
-  - name: genesis-storage
-    mountPath: /data # Mount location inside the container
+extraVolumeMounts: []
 
 # -- Additional ports. Useful when using extraContainers
 extraPorts: []
@@ -352,11 +340,11 @@ secretEnv: {}
 initChownData:
   # -- Init container to set the correct permissions to access data directories
   enabled: true
+  freshInit: true
   image:
     # -- Container repository
-    repository: busybox
-    # -- Container tag
-    tag: "1.34.0"
+    repository: "jx3mqubebuild.azurecr.io/mqube-geth"
+    tag: 0.0.9
     # -- Container pull policy
     pullPolicy: IfNotPresent
   # -- Resource requests and limits
@@ -367,6 +355,14 @@ initChownData:
   #  requests:
   #    cpu: 100m
   #    memory: 128Mi
+  command:
+    - sh
+    - -c
+    - |
+      ls /config
+      cp /config/init-validator-script.sh /tmp/init-validator-script.sh
+      chmod +x /tmp/init-validator-script.sh
+      /tmp/init-validator-script.sh
 
 serviceMonitor:
   # -- If true, a ServiceMonitor CRD is created for a prometheus operator
@@ -390,3 +386,13 @@ serviceMonitor:
   scrapeTimeout: 30s
   # -- ServiceMonitor relabelings
   relabelings: []
+
+gethconfig:
+  # -- ConfigMap for geth
+  enabled: true
+
+# -- TOML config file
+# @default -- See `values.yaml` for example
+config: |
+  [Node.P2P]
+  DialRatio = 3
