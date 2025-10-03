@@ -28,6 +28,7 @@ spec:
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
+      shareProcessNamespace: true
       serviceAccountName: {{ include "prysm.serviceAccountName" . }}
     {{- if .Values.priorityClassName }}
       priorityClassName: {{ .Values.priorityClassName }}
@@ -82,6 +83,8 @@ spec:
               mountPath: "/data"
             - name: config
               mountPath: "/config"
+            - name: shared-data
+              mountPath: "/shared-data"
       {{- end }}
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
@@ -111,6 +114,8 @@ spec:
             {{- end }}
             - name: storage
               mountPath: "/data"
+            - name: shared-data
+              mountPath: "/shared-data"
             - name: jwt
               mountPath: "/data/jwt.hex"
               subPath: jwt.hex
@@ -190,15 +195,17 @@ spec:
         - name: config
           configMap:
             name: {{ include "prysm.fullname" . }}
-  {{- if not .Values.persistence.enabled }}
+      {{- if not .Values.persistence.enabled }}
         - name: storage
           emptyDir: {}
-  {{- else if .Values.persistence.existingClaim }}
-        - name: storage
+      {{- end }}
+      {{- if .Values.persistence.existingClaim }}
+        - name: shared-data
           persistentVolumeClaim:
             claimName: {{ .Values.persistence.existingClaim }}
-  {{- else }}
-  volumeClaimTemplates:
+      {{- end }}
+{{- if and (not .Values.persistence.enabled) (not .Values.persistence.existingClaim) }}
+volumeClaimTemplates:
   - metadata:
       name: storage
       annotations:
@@ -214,4 +221,4 @@ spec:
       selector:
         {{- toYaml .Values.persistence.selector | nindent 8 }}
       {{- end }}
-  {{- end }}
+{{- end }}

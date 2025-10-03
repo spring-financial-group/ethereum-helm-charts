@@ -4,7 +4,7 @@ echo "running script init-validator-script"
 
 echo "HOSTNAME: $HOSTNAME"
 
-
+exit 0
 
 # Clean validator data directory
 echo "Cleaning existing validator DB..."

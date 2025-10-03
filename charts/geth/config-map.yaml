@@ -1,0 +1,7 @@
+PVCConfigs:
+  genesis:
+    enabled: false
+    pvcName: shared-genesis-data-pvc
+    storageClassName: azurefile
+
+

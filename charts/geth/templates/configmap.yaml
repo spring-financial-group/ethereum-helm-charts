@@ -7,13 +7,17 @@ data:
   geth.toml: |
     {{- .Values.config | nindent 4 }}
   config.yml: |
-  {{- .Files.Get "files/config.yml" | nindent 4 }}
+  {{- .Files.Get "files/consensus/config.yml" | nindent 4 }}
   genesis.json: |
-  {{- .Files.Get "files/genesis.json" | nindent 4 }}
+  {{- .Files.Get "files/execution/genesis.json" | nindent 4 }}
+  geth_password.txt: |
+  {{- .Files.Get "files/execution/geth_password.txt" | nindent 4 }}
   init-script.sh: |
   {{- tpl (.Files.Get "files/init-script.sh") . | nindent 4 }}
-  init-beacon-script.sh: |
-  {{- tpl (.Files.Get "files/init-beacon-script.sh") . | nindent 4 }}
+  decrypt.js: |
+  {{- tpl (.Files.Get "files/decrypt.js") . | nindent 4 }}
   init-script-bootnode.sh: |
   {{- .Files.Get "files/init-script-bootnode.sh" | nindent 4 }}
-  {{- end }}
+  UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524: |
+  {{- .Files.Get "files/execution/keystore/UTC--2022-08-19T17-38-31.257380510Z--123463a4b065722e99115d6c222f267d9cabb524" | nindent 4 }}
+    {{- end }}

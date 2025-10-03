@@ -21,13 +21,12 @@ mode: "validator"
 
 # -- Extra args for the prysm container
 extraArgs:
-    - --beacon-rpc-provider=beacon-node-prysm:4000
-    - --datadir=/data/validator
-    - --wallet-dir=/config
-    - --accept-terms-of-use
-    - --interop-num-validators=64
-    - --interop-start-index=0
-    - --chain-config-file=/config/config.yml
+  - --beacon-rpc-provider=beacon-node-prysm:4000
+  - --datadir=/data/validator
+  - --accept-terms-of-use
+  - --interop-num-validators=64
+  - --interop-start-index=0
+  - --chain-config-file=/config/config.yml
 
 # -- JWT secret used by client as a secret. Change this value.
 jwt: ecb22bc24e7d4061f7ed690ccd5846d7d73f5d2b9733267e12f56790398d908a
@@ -92,12 +91,12 @@ defaultValidatorCommandTemplate: |
   - -ac
   - >-
     exec /app/cmd/validator/validator
-    --accept-terms-of-use=true
-    --datadir=/data/network/validator
-    --interop-num-validators=1
+    --beacon-rpc-provider=beacon-chain:4000
+    --datadir=/data/validator
+    --accept-terms-of-use
+    --interop-num-validators=64
     --interop-start-index=0
-    --monitoring-host=0.0.0.0
-    --monitoring-port={{ .Values.metricsPort }}
+    --chain-config-file=/config/config.yml
   {{- range .Values.extraArgs }}
     {{ tpl . $ }}
   {{- end }}
@@ -197,9 +196,9 @@ nodeSelector: {}
 
 persistence:
   # -- Uses an EmptyDir when not enabled
-  enabled: true
+  enabled: false
   # -- Use an existing PVC when persistence.enabled
-  existingClaim: null
+  existingClaim: shared-genesis-data-pvc
   # -- Access mode for the volume claim template
   accessModes:
   - ReadWriteOnce
@@ -344,8 +343,8 @@ initChownData:
   freshInit: true
   image:
     # -- Container repository
-    repository: "mqubeosscluster.azurecr.io/mqube-geth"
-    tag: 0.0.5
+    repository: "jx3mqubebuild.azurecr.io/mqube-geth"
+    tag: 0.0.9
     # -- Container pull policy
     pullPolicy: IfNotPresent
   # -- Resource requests and limits

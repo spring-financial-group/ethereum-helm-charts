@@ -9,8 +9,8 @@ replicas: 1
 
 image:
   # -- geth container image repository
-  repository: "mqubeosscluster.azurecr.io/mqube-geth"
-  tag: 0.0.6  # -- geth container pull policy
+  repository: "docker.io/ethereum/client-go"
+  tag: v1.14.11  # -- geth container pull policy
   pullPolicy: IfNotPresent
 
 # -- Extra args for the geth container
@@ -33,13 +33,6 @@ config: |
 # -- JWT secret used by client as a secret. Change this value.
 jwt: ecb22bc24e7d4061f7ed690ccd5846d7d73f5d2b9733267e12f56790398d908a
 
-PVCConfigs:
-  genesis:
-    enabled: false
-    pvcName: genesis-data-pvc
-    storageClassName: azurefile
-
-
 # -- Template used for the default command
 # @default -- See `values.yaml`
 defaultCommandTemplate: |
@@ -50,39 +43,31 @@ defaultCommandTemplate: |
     . /env/init-nodeport;
   {{- end }}
     exec geth
-    --datadir=/data/network/$HOSTNAME
-    --config=/config/geth.toml
-  {{- if .Values.p2pNodePort.enabled }}
-    {{- if not (contains "--nat=" (.Values.extraArgs | join ",")) }}
-    --nat=extip:$EXTERNAL_IP
-    {{- end }}
-    {{- if not (contains "--port=" (.Values.extraArgs | join ",")) }}
-    --port=$EXTERNAL_PORT
-    {{- end }}
-  {{- else }}
-    {{- if not (contains "--nat=" (.Values.extraArgs | join ",")) }}
-    --nat=extip:$(POD_IP)
-    {{- end }}
-    {{- if not (contains "--port=" (.Values.extraArgs | join ",")) }}
-    --port={{ include "geth.p2pPort" . }}
-    {{- end }}
-  {{- end }}
+    --datadir=/data/geth/$HOSTNAME
+    --authrpc.jwtsecret=/shared-data/jwt.hex
     --http
     --http.addr=0.0.0.0
-    --http.port={{ .Values.httpPort }}
-    --http.vhosts=*
+    --http.api=admin,debug,engine,eth,miner,net,rpc,txpool,web3
     --http.corsdomain=*
+    --http.port=8545
+    --http.vhosts=*
     --ws
+    --ws.api=admin,debug,engine,eth,miner,net,rpc,txpool,web3
     --ws.addr=0.0.0.0
-    --ws.port={{ .Values.wsPort }}
+    --ws.port=8546
     --ws.origins=*
-    --authrpc.jwtsecret=/data/jwt.hex
-    --authrpc.addr=0.0.0.0
-    --authrpc.port={{ .Values.authPort }}
     --authrpc.vhosts=*
+    --authrpc.addr=0.0.0.0
+    --authrpc.port=8551
+    --allow-insecure-unlock
+    --unlock=0x123463a4b065722e99115d6c222f267d9cabb524
+    --password=/shared-data/geth_password.txt
+    --nodiscover
+    --syncmode=full
     --metrics
-    --metrics.addr=0.0.0.0
-    --metrics.port={{ .Values.metricsPort }}
+    --metrics.addr=geth
+    --metrics.port=6060
+    --metrics.expensive
   {{- range .Values.extraArgs }}
     {{ tpl . $ }}
   {{- end }}
@@ -117,21 +102,35 @@ p2pNodePort:
       pullPolicy: IfNotPresent
 
 ingress:
-  # -- Ingress resource for the HTTP API
-  enabled: false
-  # -- Annotations for Ingress
-  annotations: {}
-  # kubernetes.io/ingress.class: nginx
-  # kubernetes.io/tls-acme: "true"
-  # -- Ingress host
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://mqube-blockscout-frontend.jx.mqube.build"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET,POST,PUT,DELETE,OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-headers: "Origin,Content-Type,Accept,Authorization,x-apollo-tracing,updated-gas-oracle"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "4m"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+
+
   hosts:
-    - host: chart-example.local
-      paths: []
-  # -- Ingress TLS
-  tls: []
-  #  - secretName: chart-example-tls
-  #    hosts:
-  #      - chart-example.local
+    - host: mqube-geth.jx.mqube.build
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: geth-node
+              port:
+                number: http-rpc
+
+  tls:
+    - secretName: tls-jx-mqube-build-p
+      hosts:
+        - mqube-geth.jx.mqube.build
 
 # -- Affinity configuration for pods
 affinity: {}
@@ -180,9 +179,9 @@ nodeSelector: {}
 
 persistence:
   # -- Uses an EmptyDir when not enabled
-  enabled: true
+  enabled: false
   # -- Use an existing PVC when persistence.enabled
-  existingClaim:
+  existingClaim: shared-genesis-data-pvc
   # -- Access mode for the volume claim template
   accessModes:
     - ReadWriteMany
@@ -302,7 +301,24 @@ initContainers: []
 #   command: ['sh', '-c', 'echo hello']
 
 # -- Additional containers
-extraContainers: []
+extraContainers:
+  - name: debug-node
+    image: "jx3mqubebuild.azurecr.io/mqube-geth:0.0.13"
+    command: [ "/bin/sh", "-c", "while true; do sleep 30; done" ]
+    volumeMounts:
+      - name: shared-data
+        mountPath: /shared-data
+      - name: storage
+        mountPath: /data
+      - name: config
+        mountPath: /config
+    resources:
+      limits:
+        cpu: 100m
+        memory: 128Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
 
 # -- Additional volumes
 extraVolumes: []
@@ -326,11 +342,10 @@ secretEnv: {}
 initChownData:
   # -- Init container to set the correct permissions to access data directories
   enabled: true
-  freshInit: true
   image:
     # -- Container repository
-    repository: "mqubeosscluster.azurecr.io/mqube-geth"
-    tag: 0.0.6
+    repository: "jx3mqubebuild.azurecr.io/mqube-geth"
+    tag: 0.0.13
     # -- Container pull policy
     pullPolicy: IfNotPresent
   # -- Resource requests and limits
@@ -348,6 +363,7 @@ initChownData:
       cp /config/init-script.sh /tmp/init-script.sh
       chmod +x /tmp/init-script.sh
       /tmp/init-script.sh
+
 
 serviceMonitor:
   # -- If true, a ServiceMonitor CRD is created for a prometheus operator

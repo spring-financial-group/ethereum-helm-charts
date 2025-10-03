@@ -7,11 +7,9 @@ data:
   geth.toml: |
     {{- .Values.config | nindent 4 }}
   config.yml: |
-  {{- .Files.Get "files/config.yml" | nindent 4 }}
+  {{- .Files.Get "files/consensus/config.yml" | nindent 4 }}
   genesis.json: |
-  {{- .Files.Get "files/genesis.json" | nindent 4 }}
-  init-script.sh: |
-  {{- tpl (.Files.Get "files/init-script.sh") . | nindent 4 }}
+  {{- .Files.Get "files/execution/genesis.json" | nindent 4 }}
   init-beacon-script.sh: |
   {{- tpl (.Files.Get "files/init-beacon-script.sh") . | nindent 4 }}
   init-validator-script.sh: |
